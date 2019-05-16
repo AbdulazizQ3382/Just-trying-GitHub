@@ -1,0 +1,183 @@
+public class BlockchainImp implements Blockchain {
+	private List<Block> lBlocks;
+	public final static byte[] initHash = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0 };
+	public static final int minerReward = 100;
+	
+	public BlockchainImp() {
+		lBlocks=new LinkedList<Block>();
+	}
+
+	@Override
+	public int length() {
+		int n=0;
+		if(lBlocks.empty())
+			return 0;
+		lBlocks.findFirst();
+		while(!lBlocks.last()) {
+			lBlocks.findNext();
+			n++;
+		}
+		n++;
+		return n;
+	}
+
+	@Override
+	public List<Block> getBlocks() {
+		if(lBlocks.empty())
+			return null;
+		return lBlocks;
+	}
+	
+	private boolean equalBytes(byte[] a, byte[]b) {
+		if(a.length !=b.length)
+			return false;
+		for(int i=0;i<a.length;i++)
+			if(a[i] !=b[i])
+				return false;
+		return true;
+	}
+
+	@Override
+	public int getBalance(byte[] pbk) {
+		int balance=0;
+		if(lBlocks.empty())
+		return balance;
+		lBlocks.findFirst();
+		while(!lBlocks.last()) {
+			if(lBlocks.retrieve().getMiner()!=null)
+			if(equalBytes(pbk,lBlocks.retrieve().getMiner()))
+				balance+=minerReward;
+			if(lBlocks.retrieve().getTransaction()!=null&&lBlocks.retrieve().getTransaction().getSender()!=null&&lBlocks.retrieve().getTransaction().getReceiver()!=null)
+			{
+			if(equalBytes(pbk,lBlocks.retrieve().getTransaction().getSender()))
+				balance-=lBlocks.retrieve().getTransaction().getAmount();
+			if(equalBytes(pbk,lBlocks.retrieve().getTransaction().getReceiver()))
+				balance+=lBlocks.retrieve().getTransaction().getAmount();
+			}
+			if(balance<0) return -1;
+			lBlocks.findNext();
+		}
+		if(lBlocks.retrieve().getMiner()!=null)
+		if(pbk==lBlocks.retrieve().getMiner())
+			balance+=minerReward;
+		if(lBlocks.retrieve().getTransaction()!=null&&lBlocks.retrieve().getTransaction().getSender()!=null&&lBlocks.retrieve().getTransaction().getReceiver()!=null)
+		{
+		if(equalBytes(pbk,lBlocks.retrieve().getTransaction().getSender()))
+			balance-=lBlocks.retrieve().getTransaction().getAmount();
+		if(equalBytes(pbk,lBlocks.retrieve().getTransaction().getReceiver()))
+			balance+=lBlocks.retrieve().getTransaction().getAmount();
+		}
+		if(balance<0) return -1;
+		return balance;		
+	}
+	private int getBalance2(byte[] pbk,int j)
+	{
+		int balance=0;
+		if(lBlocks.empty())
+		return balance;
+		lBlocks.findFirst();
+		for(int i=0;i<=j;i++) 
+		{
+			if(lBlocks.retrieve().getMiner()!=null)
+			if(equalBytes(pbk,lBlocks.retrieve().getMiner()))
+				balance+=minerReward; 
+			if(lBlocks.retrieve().getTransaction()!=null&&lBlocks.retrieve().getTransaction().getSender()!=null&&lBlocks.retrieve().getTransaction().getReceiver()!=null)
+				 {
+			if(equalBytes(pbk,lBlocks.retrieve().getTransaction().getSender()))
+				balance-=lBlocks.retrieve().getTransaction().getAmount();
+			if(equalBytes(pbk,lBlocks.retrieve().getTransaction().getReceiver()))
+				balance+=lBlocks.retrieve().getTransaction().getAmount();
+				 }
+			if(balance<0) return -1;
+			lBlocks.findNext();
+		}
+			return balance;
+	}
+	@Override
+	public void removeInvalid() {
+		if(lBlocks.empty()||length()<=1)
+			return;
+		int count=0;
+		lBlocks.findFirst();
+		while(!lBlocks.last()) {
+			if(lBlocks.retrieve().getTransaction()!=null) {
+			if(!lBlocks.retrieve().isHashValid()||!lBlocks.retrieve().getTransaction().isSignatureValid()||lBlocks.retrieve().getTransaction().getAmount()>getBalance2(lBlocks.retrieve().getTransaction().getSender(),count)) 
+			{
+				lBlocks.remove();
+				while(!lBlocks.last())
+					lBlocks.remove();
+				lBlocks.remove();	return;
+			}	}
+			lBlocks.findNext();count++;
+		}
+	}
+   
+	@Override
+	public boolean addBlock(Block b) {
+		if(lBlocks.empty()){
+			b.setPrevHash(initHash);
+			lBlocks.insert(b);
+			return true;
+		}
+		if(b.getTransaction()==null&&!lBlocks.empty())
+			return false;
+		if(b.getTransaction().getSender()==null)
+			return false;
+		if(b.getTransaction().getReceiver()==null)
+			return false;
+		
+		lBlocks.findFirst();
+		while(!lBlocks.last())
+		lBlocks.findNext();
+		b.setPrevHash(getLastBlockHash());
+		lBlocks.insert(b);
+		return true;
+	}
+
+	@Override
+	public byte[] getLastBlockHash() {
+		if(lBlocks.empty())
+		return initHash;
+		lBlocks.findFirst();
+		while(!lBlocks.last())
+			lBlocks.findNext();
+		return lBlocks.retrieve().getHash();
+	}
+}
+/*
+Miner: 30 5C 30 0D 06 09 2A 86 48 86 F7 0D 01 01 01 05 00 03 4B 00 30 48 02 41 00 F0 45 40 EC 62 08 87 17 B1 B9 BC FB D5 16 E1 2F A9 68 73 DB A3 27 C9 06 42 61 45 93 29 FC 87 09 7F 51 75 D8 BA 13 EA BF CB 21 8C D7 D6 2E 57 5D 78 CD 30 70 9C 16 D8 08 70 E3 D9 4C 24 0E 4D AB 02 03 01 00 01 
+Nonce: 430
+Transaction: false
+Previous block hash: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+Hash: 00 2B F7 40 FE DA D6 EF 6C 1F F3 E6 92 6E 8E 78 99 0B 6E F1 F6 AB A7 08 64 7A 43 D0 43 E6 88 0B 
+
+Miner: 30 5C 30 0D 06 09 2A 86 48 86 F7 0D 01 01 01 05 00 03 4B 00 30 48 02 41 00 F0 45 40 EC 62 08 87 17 B1 B9 BC FB D5 16 E1 2F A9 68 73 DB A3 27 C9 06 42 61 45 93 29 FC 87 09 7F 51 75 D8 BA 13 EA BF CB 21 8C D7 D6 2E 57 5D 78 CD 30 70 9C 16 D8 08 70 E3 D9 4C 24 0E 4D AB 02 03 01 00 01 
+Nonce: 77
+Transaction: true
+Sender: 30 5C 30 0D 06 09 2A 86 48 86 F7 0D 01 01 01 05 00 03 4B 00 30 48 02 41 00 F0 45 40 EC 62 08 87 17 B1 B9 BC FB D5 16 E1 2F A9 68 73 DB A3 27 C9 06 42 61 45 93 29 FC 87 09 7F 51 75 D8 BA 13 EA BF CB 21 8C D7 D6 2E 57 5D 78 CD 30 70 9C 16 D8 08 70 E3 D9 4C 24 0E 4D AB 02 03 01 00 01 
+Receiver: 30 5C 30 0D 06 09 2A 86 48 86 F7 0D 01 01 01 05 00 03 4B 00 30 48 02 41 00 AB 2B 1A 9C 4B 86 BD 6F EA 5C 2E EB 58 FD 2E 8E 37 B5 79 72 3B 86 B9 9F 93 18 66 59 B0 E0 B9 28 01 AD C5 CE CC 49 BD 43 EE 9C 24 59 B6 94 28 26 06 1F 2D 4E D1 C9 95 42 B7 D8 97 EB B5 2C D3 AD 02 03 01 00 01 
+Amount: 10
+Signature: A2 62 12 6D 4C CA 9E 1D 43 A0 A9 99 3B 58 CD AF 24 1C 91 11 36 83 1E 34 5A A0 A0 AF 92 AB CB 44 B0 91 65 EC 4D 1E 26 56 78 EF 18 14 96 6B 09 19 73 C2 23 BA 33 FE 3B B2 80 C2 D7 62 A3 98 52 F4 
+Previous block hash: 00 2B F7 40 FE DA D6 EF 6C 1F F3 E6 92 6E 8E 78 99 0B 6E F1 F6 AB A7 08 64 7A 43 D0 43 E6 88 0B 
+Hash: 00 0D 22 F2 25 71 DB 92 84 C5 4E DC E9 F1 7D E1 03 56 EA 82 53 65 B5 3C 24 CF 87 CE 25 51 A4 05 
+
+Miner: 30 5C 30 0D 06 09 2A 86 48 86 F7 0D 01 01 01 05 00 03 4B 00 30 48 02 41 00 F0 45 40 EC 62 08 87 17 B1 B9 BC FB D5 16 E1 2F A9 68 73 DB A3 27 C9 06 42 61 45 93 29 FC 87 09 7F 51 75 D8 BA 13 EA BF CB 21 8C D7 D6 2E 57 5D 78 CD 30 70 9C 16 D8 08 70 E3 D9 4C 24 0E 4D AB 02 03 01 00 01 
+Nonce: 301
+Transaction: true
+Sender: 30 5C 30 0D 06 09 2A 86 48 86 F7 0D 01 01 01 05 00 03 4B 00 30 48 02 41 00 F0 45 40 EC 62 08 87 17 B1 B9 BC FB D5 16 E1 2F A9 68 73 DB A3 27 C9 06 42 61 45 93 29 FC 87 09 7F 51 75 D8 BA 13 EA BF CB 21 8C D7 D6 2E 57 5D 78 CD 30 70 9C 16 D8 08 70 E3 D9 4C 24 0E 4D AB 02 03 01 00 01 
+Receiver: 30 5C 30 0D 06 09 2A 86 48 86 F7 0D 01 01 01 05 00 03 4B 00 30 48 02 41 00 B3 8E 5E 99 1E 48 25 C6 E5 E6 5A 61 97 05 DB 86 97 80 0A E1 10 4C BF 19 88 7C 6F 9B 9B D0 1A 56 79 3C A0 50 87 F3 E5 D4 11 CC E0 6A 08 A8 65 7E 24 09 1D 36 1D 62 90 A0 EB A6 4B C6 A6 27 90 CB 02 03 01 00 01 
+Amount: 30
+Signature: 7F 32 C7 79 74 75 11 1E BB 30 59 7E 04 6F D3 97 03 0C E9 43 A2 B6 EB CE 07 F7 97 80 EE 95 8D F0 95 94 ED C4 D9 43 BB FB 2F E5 5E 56 BA 23 2E B9 6D D4 2F 8A E1 13 CC 38 1F E0 DB 81 30 88 BE 93 
+Previous block hash: 00 0D 22 F2 25 71 DB 92 84 C5 4E DC E9 F1 7D E1 03 56 EA 82 53 65 B5 3C 24 CF 87 CE 25 51 A4 05 
+Hash: 00 87 8E CE BA 6B 23 06 FB 0C B8 CE E0 C8 61 6D 84 80 1C DC 57 8C 8E 75 C6 A0 34 A0 43 5B DB 89 
+
+Miner: 30 5C 30 0D 06 09 2A 86 48 86 F7 0D 01 01 01 05 00 03 4B 00 30 48 02 41 00 AB 2B 1A 9C 4B 86 BD 6F EA 5C 2E EB 58 FD 2E 8E 37 B5 79 72 3B 86 B9 9F 93 18 66 59 B0 E0 B9 28 01 AD C5 CE CC 49 BD 43 EE 9C 24 59 B6 94 28 26 06 1F 2D 4E D1 C9 95 42 B7 D8 97 EB B5 2C D3 AD 02 03 01 00 01 
+Nonce: 259
+Transaction: true
+Sender: 30 5C 30 0D 06 09 2A 86 48 86 F7 0D 01 01 01 05 00 03 4B 00 30 48 02 41 00 F0 45 40 EC 62 08 87 17 B1 B9 BC FB D5 16 E1 2F A9 68 73 DB A3 27 C9 06 42 61 45 93 29 FC 87 09 7F 51 75 D8 BA 13 EA BF CB 21 8C D7 D6 2E 57 5D 78 CD 30 70 9C 16 D8 08 70 E3 D9 4C 24 0E 4D AB 02 03 01 00 01 
+Receiver: 30 5C 30 0D 06 09 2A 86 48 86 F7 0D 01 01 01 05 00 03 4B 00 30 48 02 41 00 B9 8E 7D FA CC 83 22 B9 AD 28 9B 82 26 13 F3 EB 4A F9 D5 05 2B 51 C6 F6 0F 62 BB FF 5F A7 72 2F BB 09 8D 1C 73 A1 81 D1 54 C5 DA 7E B8 E8 35 CC 8E B8 0F EB 13 A8 DE E4 52 9D 2D A7 4F DD 4C 17 02 03 01 00 01 
+Amount: 20
+Signature: 0A 08 59 BF 18 D9 01 5D FF FC CC D8 6F 49 37 2C A7 5A 26 A0 A9 B4 30 45 8C 03 25 B7 00 62 B9 DD 4B F6 61 54 35 30 BE 5A C9 BB D4 94 B6 E5 DD CF 7E 2A 60 75 75 93 47 55 C6 64 97 C2 C3 8B 1D 9A 
+Previous block hash: 00 87 8E CE BA 6B 23 06 FB 0C B8 CE E0 C8 61 6D 84 80 1C DC 57 8C 8E 75 C6 A0 34 A0 43 5B DB 89 
+Hash: 00 0D C2 D6 49 F1 49 93 1B AF 64 D2 CA 57 CF C2 5F 7B 0C BA 79 31 F4 72 5B DD 4F D0 9F 37 00 CB */

@@ -1,3 +1,5 @@
+
+//Block chain
 public class BlockchainImp implements Blockchain {
 	private List<Block> lBlocks;
 	public final static byte[] initHash = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

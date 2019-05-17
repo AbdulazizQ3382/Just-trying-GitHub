@@ -1,0 +1,69 @@
+package reviewingJava;
+
+// watch and learn
+import java.util.*;
+
+public class ForHussam {
+
+	public static <T> int counting(String a, LinkedList<T> b) {
+		int nb = 0;
+		for (int i = 0; i < b.size(); i++)
+			if (b.get(i).equals(a))
+				nb++;
+		return nb;
+	}
+
+	public static void main(String[] args) {
+		Scanner input = new Scanner(System.in);
+		LinkedList<String> letters = new LinkedList<String>();
+		System.out.println("Enter your letter:");
+		String c=input.next();
+		boolean flag = false;
+		do {
+			try {
+				if (flag == true) {
+					System.out.println("Enter your letter(Type no if do you want to stop):");
+				 c = input.next();}
+				 if(!c.equalsIgnoreCase("No"))
+				letters.addFirst(c);
+				if (c.length() > 1&&!c.equalsIgnoreCase("No"))
+					throw new Exception("Wrong, only a letter is allowed.");
+			} catch (Exception e) {
+				System.out.println(e.getMessage());
+				letters.removeFirst();
+			}
+			flag = true;
+		} while (!c.equalsIgnoreCase("No"));
+		if(letters.getFirst()==null) {
+			System.out.println("You don't have any letters.");System.exit(0);}
+		System.out.println("Thank you for trying my program ;)." + "\n" + "And here's your letters." + "\n"
+				+ "If you want a ferquency for a specific letter type 1 after we show you the elements.");
+		int i = 0;
+		for (String b : letters) {
+			if (i == letters.size() - 1 && letters.size() > 1) {
+				System.out.print(letters.get(i) + "]");
+				break;
+			}
+			if (i == 0)
+				System.out.print("[" + letters.get(i) + ",");
+			else
+				System.out.print(letters.get(i) + ",");
+			i++;
+		}
+
+		flag = true;
+		while (flag) {
+			try {
+				int answer = input.nextInt();
+				if (answer == 1) {
+					System.out.println("Ok then, give us the letter you want to know it's ferquency.");
+					String sc = input.next();
+					System.out.println("The ferquency of " + sc + " is " + ForHussam.counting(sc, letters));
+					flag=false;
+				}
+			} catch (InputMismatchException m) {
+				System.out.println("Error, only type(1 or 2)");
+			}
+		}
+	}
+}
